@@ -1696,18 +1696,6 @@
                                     </div>
 
 
-<!--                                 <table style="border-collapse: separate; border-spacing: 10px;" >
-                                    <tr>
-                                        <td>
-                                            Name:&nbsp&nbsp
-                                        </td>
-                                        <td>
-                                            <div class="controls form-inline">
-                                                <input id="KeywordSearchInput" type="text" class="input-small" placeholder="3FGL J0038.0-2501">
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </table> -->
 
                             </div>
 
