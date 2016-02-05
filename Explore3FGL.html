@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+    <title>Fermi-LAT 3FGL Catalog</title>
+
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <script type="text/javascript" src="./js/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="./js/raphael-2.1.0.min.js"></script>
+    <script type="text/javascript" src="./js/kartograph.js"></script>
+
+    <link rel="stylesheet" href="./css/bootstrap.css" type="text/css" />
+   	<link rel="stylesheet" href="http://localhost/~kocevski/kartograph.org/js/highlight/styles/github.css" type="text/css" />
+
+
+</head>
+
+<!-- custom css -->
+<style type="text/css">
+
+/* reset bootstrap styles for dat.gui */
+.dg select {
+    width: auto;
+    height: auto;
+    border: none;
+    color: #000;
+    font: 11px 'Lucida Grande', sans-serif
+}
+.dg input {
+    box-shadow: none;
+    -webkit-box-shadow: none
+    -moz-box-shadow: none;
+    border-radius: 0;
+    font: 11px 'Lucida Grande', sans-serif;
+}
+
+#k-proj-title {
+    text-align: center;
+}
+
+/* The selection tool tip */
+#tip {
+    border: solid;
+    border-radius: 5px;
+    background-color: rgba(255,255,255,.90);
+    /*background-color: white;   */
+    /*opacity: 0.8;*/
+    border: 2px solid rgba(0, 0, 0, .9);
+    position: absolute;
+    height: 45px;
+    width: auto;    
+    left: -200px; 
+    top: 100px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 1px 0 rgba(255,255,255,.5) inset;
+    text-align: left;
+    color: #000;
+    padding: 10px 10px 0px 10px;
+}
+
+/* The red selection circle */
+#Selection {
+    border: solid;
+    border-radius: 10px;
+    border-width: 2px;
+    border-color: red;
+    opacity: 0.75;
+    position: absolute;
+    height: 10px;
+    width: 10px;    
+    left: -200px; 
+    top: 100px;
+}
+
+
+/* Removing the hover coloring from bootstrap tables */
+.table tbody tr:hover td,
+.table tbody tr:hover th {
+  background-color: transparent;
+}
+
+
+</style>
+
+<body>
+
+    <div id="tip"></div>
+    <div id="Selection" width=10 height=10></div>
+
+    <div class="container">
+        <div class="row">
+    		<div class="span3 sidebar">
+    			<div class="head" align="center">
+    				<a href="/"><img src="FermiMeatBall.png" alt="Kartograph" width="125px" height="125px"/></a>
+    				<p class="tagline">Fermi Gamma-ray Space Telescope 3FGL Catalog</p>
+
+                    <button ID="button" onclick="toggleContent()">Start Drawing</button>
+                    <!-- <div ID="content" style="display:block;">Click here to draw a path</div> -->
+    
+
+                    <div id="UserInput" style="padding-top:0px">
+                        <form id="submitForm">
+                            <textarea id="Terminal" name="comment" form="submitForm" height="100px" wrap="hard" style="color:#000"></textarea>
+                        </form>
+                    </div>
+
+                    <button ID="submitbutton" onclick="submit()">Submit</button>&nbsp<button ID="undobutton" onclick="undo()">Undo</button>&nbsp<button ID="clearbutton" onclick="clearContent()">Clear</button>&nbsp<button ID="submitbutton" onclick="download()">Save</button>
+                    <br>
+                    <hr>
+                    <div align='left' style='padding-bottom:10px'>Display Options:
+                    </div>
+
+                    <center>
+                    &nbsp<button ID="labelsButton" onclick="toggleLabels()" style="width:145px">Disable Labels</button>
+                    <BR>
+                    <BR>
+                    <button ID="galacticPlaneButton" onclick="toggleGalacticPlane()" style="width:145px">Hide Galactic Plane</button>
+                    </center>
+
+    			</div>
+    		</div>
+
+    		<div class="span9">
+    			<div class="content">
+
+    				<center>
+					<H2>Fermi-LAT 3FGL Catalog</H2>
+					</center>
+					<BR>
+
+
+		            <script type="text/javascript" src="./js/dat.gui.js"></script>
+		            <script type="text/javascript">
+
+		                var GlobeOpt = function() {
+		                    this.lon0 = 0;
+		                    this.lat0 = 0;
+		                    this.lat1 = 0;
+		                    this.lat2 = 0;
+		                    this.dist = 2;
+		                    this.up = 0;
+		                    this.tilt = 0;
+		                    this.proj = 'aitoff';
+		                    this.projstr = '+proj=lcc +lat_1=0 +lat_0=0 +lon_0=0 +k_0=0.999877499 +x_0=600000 +y_0=200000 +a=6378249.2 +b=6356515 +towgs84=-168,-60,320,0,0,0,0 +pm=paris +units=m',
+		                    //this.flip = 0;
+		                    this.offsetx = 0;
+		                    this.offsety = 0;
+		                    this.startx = 0;
+		                    this.starty = 0;
+		                    this.deltalon = 0;
+		                    this.deltalat = 0;
+		                    this.isdragged = false;
+		                    this.firstclick = true;
+		                };
+
+		                var P;
+		                frame = 0;
+
+		                var globeopt = new GlobeOpt();
+		                var url = location.href.split('#');
+		                if (url.length>1) globeopt.proj = url[1];
+
+		                var points_CanvasProjection = new Array();
+		                var userPoint_CanvasProjection = new Array();
+		                var mouseCoords;
+
+		                var paths = new Array();
+		                var Record = 0;
+		                var TerminalOutput = new String;
+		                var disableLabels = 0;
+		                var disableGalacticPlane = 0;
+		                var userData = new Array();
+		                //userData = [];
+
+		                var previousRowElement;
+		                var sourceName;
+		                var sourceRA;
+		                var sourceDec;
+		                var sourceGlon;
+		                var sourceGlat;
+
+		                function GetUrlValue(VarSearch){
+		                    var SearchString = window.location.search.substring(1);
+		                    var VariableArray = SearchString.split('&');
+		                    for(var i = 0; i < VariableArray.length; i++){
+		                        var KeyValuePair = VariableArray[i].split('=');
+		                        if(KeyValuePair[0] == VarSearch){
+		                            return KeyValuePair[1];
+		                        }
+		                    }
+		                }
+
+
+		                $.getJSON('gll_psc_v14.json', function(points) {
+		                        window.points = points;
+		                        //renderFrame();
+		                });
+
+		                // $.getJSON('userData.json', function(userData) {
+		                //         window.userData = userData;
+		                //         //renderFrame();
+		                // });
+
+
+		                function createCanvas(id,w,h) {
+		                    if (document.getElementById(id) != null) {
+		                        var ctx = document.getElementById(id).getContext("2d");
+		                        ctx.clearRect(0,0,w,h+20);
+		                        return ctx;
+		                    }
+		                    var canvas = document.createElement("canvas");
+		                    canvas.setAttribute("id", id);
+		                    canvas.setAttribute("width", w+"px");
+		                    canvas.setAttribute("height", h+"px");
+		                    canvas.setAttribute("margin", "auto");
+		                    $('#map-parent').append(canvas);
+		                    var ctx = canvas.getContext("2d");
+		                    return ctx;
+		                };
+
+
+
+		                function showMap(p, paths, points, mouseCoords, userData) {
+		                    P = new kartograph.proj[p](globeopt);
+		                    xy = P.project(13,14);
+		                    if (isNaN(xy[0]) || isNaN(xy[1])) {
+		                        console.error(p, P, xy);
+		                        return;
+		                    };
+		                    var
+		                    lon, lat, i,
+		                    //w = $('#map-parent').width(),
+		                    w = 700,
+		                    h = 700,
+		                    grat = 15,
+		                    sea = P.sea(),
+		                    bbox = P.world_bbox(),
+		                    view,
+		                    ctx = createCanvas("proj", w,h+20),
+		                    len = ctx.measureText(p.toUpperCase()).width;
+
+		                    ctx.beginPath();
+		                    ctx.lineWidth = 1.0;
+		                    ctx.fillStyle ="#fff";
+		                    view = new kartograph.View(bbox, w, h, 10);
+		                    for (i=0;i<sea.length;i++) {
+		                        xy = view.project(sea[i]);
+		                        if (i==0) ctx.moveTo(xy[0], xy[1]);
+		                        else ctx.lineTo(xy[0], xy[1]);
+		                    }
+		                    ctx.stroke();
+		                    ctx.fill();
+		                    ctx.closePath();
+
+		                   // graticule
+		                    ctx.beginPath();
+		                    ctx.lineWidth = 0.2;
+		                    for (lat=0;lat<90;lat+=grat) {
+		                        var lats = lat == 0 ? [0] : [lat,-lat];
+		                        for (var l in lats) {
+		                            var lat_ = lats[l];
+		                            var line = [];
+		                            for (lon=-180;lon<180;lon++) {
+		                                line.push([lon,lat_]);
+		                            }
+		                            for (var i=0;i<line.length-1;i++) {
+		                                p0 = line[i];
+		                                p1 = line[i+1];
+		                                d = P.clon ? Math.abs(P.clon(p0[0])-P.clon(p1[0])) : 0;
+		                                if (P._visible(p0[0],p0[1]) && P._visible(p1[0],p1[1]) && d < 30) {
+		                                    p0 = view.project(P.project(p0[0],p0[1]));
+		                                    p1 = view.project(P.project(p1[0],p1[1]));
+		                                    ctx.moveTo(p0[0],p0[1]);
+		                                    ctx.lineTo(p1[0],p1[1]);
+		                                }
+		                            }
+		                        }
+		                    }
+		                    ctx.stroke();
+		                    ctx.fill();
+		                    ctx.closePath();
+
+
+		                   // graticule
+		                    ctx.beginPath();
+		                    ctx.lineWidth = 0.2;
+		                    for (lat=0;lat<90;lat+=grat) {
+		                        var lats = lat == 0 ? [0] : [lat,-lat];
+		                        for (var l in lats) {
+		                            var lat_ = lats[l];
+		                            var line = [];
+		                            for (lon=-180;lon<180;lon++) {
+		                                line.push([lon,lat_]);
+		                            }
+		                            for (var i=0;i<line.length-1;i++) {
+		                                p0 = line[i];
+		                                p1 = line[i+1];
+		                                d = P.clon ? Math.abs(P.clon(p0[0])-P.clon(p1[0])) : 0;
+		                                if (P._visible(p0[0],p0[1]) && P._visible(p1[0],p1[1]) && d < 30) {
+		                                    p0 = view.project(P.project(p0[0],p0[1]));
+		                                    p1 = view.project(P.project(p1[0],p1[1]));
+		                                    ctx.moveTo(p0[0],p0[1]);
+		                                    ctx.lineTo(p1[0],p1[1]);
+		                                }
+		                            }
+		                        }
+		                    }
+		                    ctx.stroke();
+		                    ctx.fill();
+		                    ctx.closePath();
+
+		                    // graticule
+		                    ctx.beginPath();
+		                    ctx.lineWidth = 0.2;
+		                    for (lon=0;lon<181;lon+=grat) {
+		                        var lons = lon == 0 || lon == 180 ? [lon] : [lon,-lon];
+		                        $.each(lons, function(l, lon_) {
+		                            var line = [];
+		                            for (lat=-90+(lon % 90 == 0 ? 0 : grat);lat<90-(lon%90 == 0 ? 0 : grat)+1;lat+=0.25) {
+		                                line.push([lon_,lat]);
+		                            }
+		                            for (var i=0;i<line.length-1;i++) {
+		                                p0 = line[i];
+		                                p1 = line[i+1];
+		                                d = P.clon ? Math.abs(P.clon(p0[0])-P.clon(p1[0])) : 0;
+		                                if (P._visible(p0[0],p0[1]) && P._visible(p1[0],p1[1]) && d < 100) {
+		                                    p0 = view.project(P.project(p0[0],p0[1]));
+		                                    p1 = view.project(P.project(p1[0],p1[1]));
+		                                    ctx.moveTo(p0[0],p0[1]);
+		                                    ctx.lineTo(p1[0],p1[1]);
+
+		                                }
+		                            }
+		                        });
+		                    }
+		                    ctx.stroke();
+		                    ctx.fill();
+		                    ctx.closePath();
+
+
+		                    // Paths
+		                    ctx.lineWidth = 1;
+		                    ctx.beginPath();
+		                    var cl, line, p0, p1, d;
+		                    for (cl=0; cl<paths.length; cl++) {
+		                        line = paths[cl];
+		                        for (i=0; i<line.length-1; i++) {
+		                            p0 = line[i];
+		                            p1 = line[i+1];
+		                            d = P.clon ? Math.abs(P.clon(p0[0])-P.clon(p1[0])) : 0;
+		                            if (P._visible(p0[0],p0[1]) && P._visible(p1[0],p1[1]) && d < 100) {
+		                                p0 = view.project(P.project(p0[0],p0[1]));
+		                                p1 = view.project(P.project(p1[0],p1[1]));
+		                                ctx.moveTo(p0[0],p0[1]);
+		                                ctx.setLineDash([0]);
+		                                ctx.lineTo(p1[0],p1[1]);
+		                            }
+		                        }
+		                    }
+		                    ctx.stroke();
+		                    ctx.fill()
+		                    ctx.closePath();
+
+
+		                    // Celestial Coordinates 
+		                    // ctx.lineWidth = 1;
+		                    // var i, point, p0;
+		                    // points_CanvasProjection = new Array();
+		                    // for (i=0; i<points.length; i++) {
+		                    //     point = points[i];
+		                    //     point_CanvasProjection = view.project(P.project(parseFloat(point.RAJ2000), parseFloat(point.DEJ2000)));
+		                    //     points_CanvasProjection.push(point_CanvasProjection);
+		                    //     if (P._visible(parseFloat(point.RAJ2000),parseFloat(point.DEJ2000))) {
+		                    //         ctx.beginPath()
+		                    //         ctx.fillStyle = "rgba(0,0,0," + parseFloat(point.Size) * 0.115 + ")";
+		                    //         //ctx.strokeStyle = "rgba(0,0,0,0.0)";
+		                    //         ctx.arc(point_CanvasProjection[0], point_CanvasProjection[1], parseFloat(point.Size)/3, 0, 2 * Math.PI, false);
+		                    //         //ctx.stroke();
+		                    //         ctx.fill()
+		                    //         ctx.closePath();
+		                    //     }
+		                    // }
+		                    // ctx.closePath();
+
+		                    // Galactic Coordinates
+		                    ctx.lineWidth = 1;
+		                    var i, point, p0;
+		                    points_CanvasProjection = new Array();
+		                    for (i=0; i<points.length; i++) {
+		                        point = points[i];
+		                        point_CanvasProjection = view.project(P.project(360.-parseFloat(point.GLON), parseFloat(point.GLAT)));
+		                        points_CanvasProjection.push(point_CanvasProjection);
+		                        if (P._visible(360.-parseFloat(point.GLON), parseFloat(point.GLAT))) {
+		                            ctx.beginPath()
+		                            ctx.fillStyle = "rgba(0,0,0," + parseFloat(point.Size) * 0.115 + ")";
+		                            //ctx.strokeStyle = "rgba(0,0,0,0.0)";
+		                            ctx.arc(point_CanvasProjection[0], point_CanvasProjection[1], parseFloat(point.Size)/3, 0, 2 * Math.PI, false);
+		                            //ctx.stroke();
+		                            ctx.fill()
+		                            ctx.closePath();
+		                        }
+		                    }
+		                    ctx.closePath();
+
+		                    // Convert the user supplied coordinates into the canvas projection
+		                    // if (typeof sourceRA !== 'undefined' && typeof sourceDec !== 'undefined') {
+		                    //     if (P._visible(parseFloat(sourceRA),parseFloat(sourceDec))) {
+		                    //         userPoint_CanvasProjection = view.project(P.project(parseFloat(sourceRA), parseFloat(sourceDec)));
+		                    //     }
+		                    // }
+
+		                    if (typeof sourceGlon !== 'undefined' && typeof sourceGlat !== 'undefined') {
+		                        if (P._visible(parseFloat(sourceGlon),parseFloat(sourceGlat))) {
+		                            userPoint_CanvasProjection = view.project(P.project(360.-parseFloat(sourceGlon), parseFloat(sourceGlat)));
+		                        }
+		                    }
+
+
+		                    // User Submitted Data
+		                    if (userData.length > 0) {
+		                        ctx.lineWidth = 1;
+		                        ctx.beginPath();
+		                        var cl, line, p0, p1, d;
+		                        for (cl=0; cl<userData.length; cl++) {
+		                            line = userData[cl];
+		                            for (i=0; i<line.length-1; i++) {
+		                                p0 = line[i];
+		                                p1 = line[i+1];
+		                                d = P.clon ? Math.abs(P.clon(p0[0])-P.clon(p1[0])) : 0;
+		                                if (P._visible(p0[0],p0[1]) && P._visible(p1[0],p1[1]) && d < 100) {
+		                                    p0 = view.project(P.project(p0[0],p0[1]));
+		                                    p1 = view.project(P.project(p1[0],p1[1]));
+		                                    ctx.moveTo(p0[0],p0[1]);
+		                                    ctx.setLineDash([0]);
+		                                    ctx.lineTo(p1[0],p1[1]);
+		                                }
+		                            }
+		                        }
+		                        ctx.stroke();
+		                        ctx.fill()
+		                        ctx.closePath();
+		                    }
+		                   
+
+
+		                    // Galactic Plane
+		                    // if (disableGalacticPlane == 0) {
+		                    //     ctx.beginPath();
+		                    //     ctx.lineWidth = 0.2;
+		                    //     var cl, line, p0, p1, d;
+		                    //     for (cl=0; cl<galacticPlane.length; cl++) {
+		                    //         line = galacticPlane[cl];
+		                    //         for (i=0; i<line.length-1; i++) {
+		                    //             p0 = line[i];
+		                    //             p1 = line[i+1];
+		                    //             d = P.clon ? Math.abs(P.clon(p0[0])-P.clon(p1[0])) : 0;
+		                    //             if (P._visible(p0[0],p0[1]) && P._visible(p1[0],p1[1]) && d < 100) {
+		                    //                 p0 = view.project(P.project(p0[0],p0[1]));
+		                    //                 p1 = view.project(P.project(p1[0],p1[1]));
+		                    //                 ctx.moveTo(p0[0],p0[1]);
+		                    //                 ctx.lineTo(p1[0],p1[1]);
+		                    //             }
+		                    //         }
+		                    //     }  
+		                    //     ctx.stroke();
+		                    //     ctx.fill();
+		                    //     ctx.closePath();
+		                    //  }
+
+
+		                    // ctx.fillStyle = "rgba(0,100,0,0.5)"; //blue
+		                    // ctx.beginPath();
+		                    // ctx.arc(45,45,15,0,Math.PI*2,true);
+		                    // ctx.fill();                        
+		                    // ctx.closePath();
+
+		                    // Points
+		                    // ctx.fillStyle = "green";
+		                    // p0 = view.project(P.project(358.539,46.0915));   
+		                    // if (P._visible(358,46.0915)) {
+		                    //     ctx.beginPath()
+		                    //     ctx.arc(p0[0], p0[1], 10, 0, 2 * Math.PI, false);
+		                    //     ctx.fill()
+		                    //     ctx.stroke();
+		                    // }
+
+		                return points_CanvasProjection, userPoint_CanvasProjection;
+
+		                };
+
+		                function renderFrame() {
+
+		                    points_CanvasProjection, userPoint_CanvasProjection = showMap(globeopt.proj, paths, points, mouseCoords, userData);
+
+		                    return points_CanvasProjection, userPoint_CanvasProjection;
+
+		                };
+
+
+		                $(function() {
+
+
+		                    $.getJSON('GalacticPlane.json', function(galacticPlane) {
+		                            window.galacticPlane = galacticPlane;
+		                            renderFrame();
+		                    });                            
+
+		                    window.gui = new dat.GUI({ 
+		                        autoPlace: false,
+		                        width: 330,
+		                        hideable: false,
+		                        resizable: false
+		                    });
+
+		                    $('.k-gui').append(gui.domElement);
+
+		                    gui.remember(globeopt);
+		                    var proj = [];
+		                    $.each(kartograph.proj, function(p) {
+		                        proj.push(p);
+		                    })
+		                    proj = proj.sort();
+		                    window.projopts = {
+		                        lon0: [-180,180, 1],
+		                        lat0: [-90, 90],
+		                        lat1: [-90, 90],
+		                        lat2: [-90, 90],
+		                        dist: [1.01, 10, 0.01],
+		                        up: [-180,180],
+		                        tilt: [-40,0],
+		                        projstr: 'str'
+		                    };
+
+		                    var updateGUI = function() {
+		                        // reset gui
+		                        try {
+		                            for (var i=gui.__controllers.length-1; i>=0; i--) {
+		                                gui.remove(gui.__controllers[i]);
+		                            }
+		                        } catch (e) {}
+		                        gui.add(globeopt, 'proj', proj).onChange(function() {
+		                            updateGUI();
+		                            renderFrame();
+		                        });
+		                        $.each(projopts, function(key, val) {
+		                            if (kartograph.proj[globeopt.proj].parameters.indexOf(key) >= 0) {
+		                                var s = val == 'str' ? gui.add(globeopt, key) : gui.add(globeopt, key, val[0], val[1]);
+		                                if (val != 'str' && val.length == 3) s.step(val[2]);
+		                                s.onChange(renderFrame);
+		                            }
+		                        });
+		                        $('#k-proj-title').html(kartograph.proj[globeopt.proj].title);
+		                        var url = location.href.split('#');
+		                        location.href = url[0]+'#'+globeopt.proj;
+		                    };
+
+		                    updateGUI();
+
+		                    $('#map-parent').click(function (e) {
+		                        globeopt.startx = e.pageX - this.offsetLeft;
+		                        globeopt.starty = e.pageY - this.offsetTop;
+
+
+		                    });
+
+		                    $('#map-parent').dblclick(function (e) {
+
+
+		                        var canvas = document.getElementById("proj");
+		                        offsetLet = canvas.offsetLeft;
+		                        offsetTop = canvas.offsetTop;
+
+		                        globeopt.startx = e.pageX - offsetLet;
+		                        globeopt.starty = e.pageY - offsetTop;
+
+		                        // Object IDs
+		                        var mouseXPosition = e.pageX - offsetLet;
+		                        var mouseYPosition = e.pageY - offsetTop;
+
+		                        mouseCoords = [mouseXPosition,mouseYPosition];
+		                        
+		                        // Get all the current points on the map
+		                        points_CanvasProjection, userPoint_CanvasProjection = renderFrame();
+
+		                        var d, i, point;
+		                        d = 100
+		                        var distances = new Array();
+		                       
+		                        for (i=0; i<points_CanvasProjection.length; i++) {
+
+		                            point_CanvasProjection = points_CanvasProjection[i];
+		                            point = points[i]
+		                            d = Math.sqrt( Math.pow(mouseXPosition - point_CanvasProjection[0], 2) + Math.pow(mouseYPosition - point_CanvasProjection[1], 2) );
+
+		                            if (d < 5) {
+
+		                                var tip = document.getElementById('tip');
+		                                tip.style.visibility = "visible";
+		                                tip.style.left = (e.pageX - 95) + "px";
+		                                tip.style.top = (e.pageY - 75) + "px";
+		                                document.getElementById("tip").innerHTML =  point.Source_Name + '<br>RA: ' + point.RAJ2000 + ' Dec: ' + point.DEJ2000;
+
+		                                var Selection = document.getElementById('Selection');
+		                                Selection.style.visibility = "visible";
+		                                Selection.style.left = (point_CanvasProjection[0] + offsetLet - 6.75) + "px";
+		                                Selection.style.top = (point_CanvasProjection[1] + offsetTop - 6.75) + "px";
+		                                Selection.style.width = "10px";
+		                                
+		                                break;
+
+		                            } else {
+
+
+
+		                            }
+
+		                        }
+
+		                    });
+
+		                    
+		                    $('#map-parent').mousedown(function (e) {
+		                        globeopt.isdragged = true;
+
+		                    });
+		                    
+		                    $('#map-parent').mouseup(function (e) {
+		                        globeopt.isdragged = false;
+		                        globeopt.firstclick = true;
+		                        $('#status2').html((e.pageX - globeopt.offsetx - globeopt.startx) + ', ' + (e.pageY - globeopt.offsety - globeopt.starty));
+		                    });
+
+		                    var latstart = 0,
+		                        lonstart = 0,
+		                        lastlat = 0,
+		                        lastlon = 0;
+
+		                    $('#map-parent').mousemove(function (e) {
+
+		                        globeopt.offsetx = this.offsetLeft;
+		                        globeopt.offsety = this.offsetTop;
+		                        $('#status').html(e.pageX + ', ' + e.pageY);
+
+		                        if (globeopt.isdragged === true) {
+		                            var tip = document.getElementById('tip');
+		                            tip.style.left = "-200px";
+		                            var Selection = document.getElementById('Selection');
+		                            Selection.style.left = "-200px";                
+
+		                            lastlat = globeopt.lat0;
+		                            lastlon = globeopt.lon0;
+		                            if (globeopt.firstclick === true) {
+		                                globeopt.startx = e.pageX - globeopt.offsetx;
+		                                globeopt.starty = e.pageY - globeopt.offsety;
+		                                latstart = globeopt.lat0;
+		                                lonstart = globeopt.lon0;
+		                                globeopt.firstclick = false;
+		                            }
+		                            var relx = e.pageX - globeopt.offsetx - globeopt.startx;
+		                            var rely = e.pageY - globeopt.offsety - globeopt.starty;
+		                            //$('#status').html(relx +', '+ rely);
+		                            globeopt.deltalon = (-relx / 4);
+		                            globeopt.deltalat = (rely / 4);
+		                            globeopt.lon0 = (lonstart + globeopt.deltalon + 540) % 360 - 180;
+		                            globeopt.lat0 = latstart + globeopt.deltalat;
+		                            if (globeopt.lat0 > 90) {globeopt.lat0 = 90; }
+		                            if (globeopt.lat0 < -90) {globeopt.lat0 = -90; }
+		                            // gui.__controllers[1].updateDisplay();
+		                            // gui.__controllers[2].updateDisplay();
+		                            //$('#relxystatus').html(globeopt.deltalat +'Â°'+ globeopt.deltalon + 'Â°');
+		                            $('#latlonstatus').html((Math.floor(globeopt.lat0)) + 'Â°, ' + (Math.floor(globeopt.lon0)) + 'Â°');
+		                            if (globeopt.lat0 !== lastlat || globeopt.lon0 !== lastlon) {
+		                                renderFrame();
+		                            }
+
+		                        } else {
+
+
+
+		                        }
+
+
+
+		                    });
+
+
+		                    $('#dataTable').on('click', 'tbody tr', function(event) {
+
+		                        // Check to see if another row element is already selected. If so, de-select it.
+		                        if ( (previousRowElement != null) && (!previousRowElement.is($(this))) ) {
+		                            previousRowElement.css({ "background-color": "#ffffff" });
+		                        }
+
+		                        if( $(this).css('background-color') == "rgb(227, 239, 255)") {
+
+		                            // Change the color of the selected row back to white and remove the tool tip
+		                            $(this).css({ "background-color": "#ffffff" });
+		                            previousRowElement = null;
+
+		                            console.log('moving element')
+
+		                            var tip = document.getElementById('tip');
+		                            tip.style.visibility = "hidden";
+
+		                            var Selection = document.getElementById('Selection');
+		                            Selection.style.visibility = "hidden";
+
+
+		                        } else {
+
+		                            // Chnage the color of the select row to light blue
+		                            $(this).css({ "background-color": "#E3EFFF" });
+		                            previousRowElement = $(this);
+		                            console.log($(this));
+
+		                            // Extract the source information
+		                            sourceName = $(this).find("td").eq(0).html(); 
+		                            sourceRA = $(this).find("td").eq(2).html(); 
+		                            sourceDec = $(this).find("td").eq(3).html(); 
+		                            sourceGlon = $(this).find("td").eq(4).html(); 
+		                            sourceGlat = $(this).find("td").eq(5).html(); 
+
+		                            // Get all the current points on the map
+		                            points_CanvasProjection, userPoint_CanvasProjection = renderFrame();
+
+		                            sourceRA_CanvasProjection = userPoint_CanvasProjection[0];
+		                            sourceDec_CanvasProjection = userPoint_CanvasProjection[1];
+
+		                            console.log(sourceRA_CanvasProjection);
+		                            console.log(sourceDec_CanvasProjection);
+
+		                            var d, i, point;
+		                            d = 100
+		                            var distances = new Array();
+
+		                            var canvas = document.getElementById("proj");
+		                            offsetLet = canvas.offsetLeft;
+		                            offsetTop = canvas.offsetTop;
+		                           
+		                            // Find the distance of eaech point from the user selected coordinates and show a tool tip at the closest point
+		                            for (i=0; i<points_CanvasProjection.length; i++) {
+
+		                                point_CanvasProjection = points_CanvasProjection[i];
+		                                point = points[i]
+		                                d = Math.sqrt( Math.pow(sourceRA_CanvasProjection - point_CanvasProjection[0], 2) + Math.pow(sourceDec_CanvasProjection - point_CanvasProjection[1], 2) );
+
+		                                if (d < 5) {
+
+		                                    var tip = document.getElementById('tip');
+		                                    tip.style.visibility = "visible";
+		                                    tip.style.left = point_CanvasProjection[0] + offsetLet - 95 + "px";
+		                                    tip.style.top = point_CanvasProjection[1] + offsetTop - 75 + "px";
+		                                    document.getElementById("tip").innerHTML= '<p>' + point.Source_Name + '<br>RA: ' + point.RAJ2000 + ' Dec: ' + point.DEJ2000;
+
+		                                    var Selection = document.getElementById('Selection');
+		                                    Selection.style.visibility = "visible";
+		                                    Selection.style.left = (point_CanvasProjection[0] + offsetLet - 6.75) + "px";
+		                                    Selection.style.top = (point_CanvasProjection[1] + offsetTop - 6.75) + "px";
+		                                    Selection.style.width = "10px";
+		                                    
+
+		                                } else {
+
+
+		                                }
+
+		                            }
+
+		                        }
+
+
+		                    });
+
+		                });
+
+
+		                var preElement;
+		                var originalBackgroundColor; 
+		            </script>
+
+                    <div id="map-parent">
+                    </div>
+
+<!--                     <div style="padding-left:65px">
+                        <h2 id="k-proj-title" style="padding-left:65px"></h2>
+                        <div class="span5">
+                            <div class="k-gui"></div>
+                        </div>
+                    </div> -->
+
+
+		            <script type="text/javascript" src="http://localhost/~kocevski/kartograph.org/js/highlight/highlight.pack.js"></script>
+		            <script type="text/javascript">
+
+		                $('pre code').each(function(i, e) {
+		                    var code = $(e).html().trim(), 
+		                        code2 = code.replace(/\s/g, ''),
+		                        last = code2.substr(code2.length-1, 1);
+
+		                    if (code.substr(0,1) == '"' && (last == '}' || last == ']')) {
+		                        e.className = 'json';
+		                        $(e).html('{'+code+'}');
+		                        hljs.highlightBlock(e);
+		                        var i = $(e).html()
+		                        $(e).html(i.substr(1, i.length-2));
+		                        return;
+		                    } else if (last == ';') {
+		                        e.className = 'javascript';
+		                    }
+
+		                    hljs.highlightBlock(e)
+		                });
+		            </script>
+
+				</div>
+
+	            <div class="footer">
+	            	<!-- &copy; Copyright 2012-2014. Created by <a href="http://driven-by-data.net">Gregor Aisch</a>. -->
+	        	</div>
+        	</div>
+		</div>
+	</div>
+
+</body>
+</html>
+
+

@@ -1,0 +1,13 @@
+Time = [54712, 54742, 54772, 54801, 54831, 54861, 54891, 54920, 54950,       54980, 55009, 55039, 55069, 55099, 55128, 55158, 55188, 55218,       55247, 55277, 55307, 55336, 55366, 55396, 55426, 55455, 55485,       55515, 55545, 55574, 55604, 55634, 55663, 55693, 55723, 55753,       55782, 55812, 55842, 55872, 55901, 55931, 55961, 55990, 56020,       56050, 56080, 56109]
+FluxHistory = [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,        0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,        0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,        0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.]
+FluxHistoryError = [[  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf],       [  0., -inf]]
+Energy = [173, 547, 1732, 5477, 31622]
+Spectrum = [[   173.        ,   6316.48388672],       [   547.        ,   1813.97937012],       [  1732.        ,    422.1583252 ],       [  5477.        ,    276.4402771 ],       [ 31622.        ,     65.16221619]]
+SpectrumError = [[   173.        ,            -inf,            -inf],       [   547.        ,            -inf,            -inf],       [  1732.        ,            -inf,            -inf],       [  5477.        ,    258.19815063,    294.68240356],       [ 31622.        ,     57.32845688,     73.0431366 ]]
+
+// Time units in Modified Julian Date (MJD)
+// FluxHistory units in 1e-8 x photons/cm/s
+// FluxHistoryError units in 1e-8 x photons/cm/s. FluxHistoryError represents [ydatum + error, ydatum - error]
+// Energy in units of MeV
+// Spectrum in units of 1e-10 x photons/cm/s. Spectrum represents [energy, ydatum]
+// SpectrumError in units of 1e-10 x photons/cm/s. SpectrumErrorError represents [energy, ydatum + error, ydatum - error]

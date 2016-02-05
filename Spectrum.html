@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+
+	<head>
+
+	    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	    <title>Flux History</title>
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	   	<meta name="description" content="">
+	   	<meta name="author" content="">
+	    <link rel="stylesheet" href="./css/bootstrap.css" type="text/css" />
+		<script type="text/javascript" src="./js/jquery-1.10.2.min.js"></script>
+
+		<!-- <script type="text/javascript" src="./data/Source0.js"></script> -->
+
+		<script type="text/javascript">
+
+            function GetUrlValue(VarSearch){
+                var SearchString = window.location.search.substring(1);
+                var VariableArray = SearchString.split('&');
+                for(var i = 0; i < VariableArray.length; i++){
+                    var KeyValuePair = VariableArray[i].split('=');
+                    if(KeyValuePair[0] == VarSearch){
+                        return KeyValuePair[1];
+                    }
+                }
+            }
+
+			// Read in the data as javascript arrays
+            var sourceName = GetUrlValue('Source')
+            var data = './data/' + sourceName + '.js'
+            console.log(data);
+
+           	// var Energy;
+           	var Spectrum;
+           	var SpectrumError;
+
+			var lineWidth = 2
+			var symbolShape = "square"
+			var symbolRadius = 3
+
+			// RelativeFluxGT100MeV
+			var chart;
+
+			$(function() {
+
+            	$.getScript(data, function(){
+
+            		console.log('Data imported!');
+            		// console.log(Energy);
+            		console.log(Spectrum);
+            		console.log(SpectrumError);
+
+            		if (typeof sourceName == 'undefined') {
+            			sourceName = ''
+            		} else {
+            			sourceName = sourceName.replace('_',' ');
+            		}
+					document.getElementById("PlotTitle").innerHTML = sourceName;
+
+
+					Highcharts.setOptions({
+					    lang: {
+					        numericSymbols: null //otherwise by default ['k', 'M', 'G', 'T', 'P', 'E']
+					        // numericSymbols: ['GeV', 'M', 'G', 'T', 'P', 'E']
+					    }
+					});
+
+
+					$('#Spectrum').highcharts({
+
+						chart: {
+							zoomType: 'xy',
+							plotBorderWidth: lineWidth,
+							plotBorderColor: '#000000'
+						},
+
+						title: {
+							text: null
+						},
+
+						// Primary X-Axis
+						xAxis: [{
+
+							// categories: Energy,
+
+							labels: {
+
+								// formatter: function() {
+								// 	return this.value + ' s';
+								// },
+
+				                formatter: function () {
+				                    return Highcharts.numberFormat(this.value, 0, '', ''); // Remove the thousands sep?
+				                },
+
+								enabled: true,
+								style: {
+									color: '#000000',
+								}
+							},
+
+							tickColor: '#000000',
+							tickPosition: 'inside',
+							tickWidth: lineWidth,
+							minorTickWidth: lineWidth,
+							minorTickInterval: 'auto',
+							minorTickPosition: 'inside',
+							gridLineWidth: 1,
+							minorGridLineWidth: 0,
+							gridLineColor: '#d3d3d3',
+							lineColor: '#000000',
+							lineWidth: lineWidth,
+							type: 'logarithmic',
+							min: 100,
+							// floor: 1,
+							// minRange: 1,
+
+							title: {
+								text: 'Energy (MeV)',
+								style: {
+									color: '#000000',
+								}
+							}
+						}],
+
+						// Primary Y-Axis
+						yAxis: [{ 
+
+							labels: {
+
+								// formatter: function() {
+								// 	return this.value + '°C';
+								// },
+
+								style: {
+									color: '#000000',
+								}
+							},
+				
+							tickColor: '#000000',
+							tickPosition: 'inside',
+							tickWidth: lineWidth,
+							minorTickWidth: lineWidth,
+							minorTickInterval: 'auto',
+							minorTickPosition: 'inside',
+							gridLineWidth: 1,
+							minorGridLineWidth: 0,
+							gridLineColor: '#d3d3d3',
+							lineColor: '#000000',
+							lineWidth: lineWidth,
+							type: 'logarithmic',
+
+							title: {
+								text: 'Photon Flux (1e-10 ph cm-2 s-1)',
+								style: {
+									color: '#000000',
+								}
+							}
+						}],
+
+						// tooltip: {
+						// 	shared: true
+						// },
+
+						legend: {
+							enabled: false
+						},
+
+						series: [
+
+							{
+
+							name: 'Spectrum',
+							color: '#000000',
+							type: 'scatter',
+							data: Spectrum,
+							// data: [180.83163, 69.407333, 12.366493, 0.57805198, 0.28396294],
+							// data: [[200,180], [400,69], [1000,12]],
+							//data: [1, 2, 4, 8, 16, 32, 64, 128, 256, 512],
+							pointStart: 100,
+							marker: {
+		                		radius: symbolRadius,
+		                		symbol: symbolShape
+		            		},
+
+							tooltip: {
+								pointFormat: 'Flux = <b>{point.y:.1f}</b>'
+							}
+
+							}, 
+
+							{
+								name: 'Error',
+								type: 'errorbar',
+								color: '#000000',
+								data: SpectrumError,
+								// data: [[200, 100,250],[400, 50,75],[1000, 10,15]],
+								pointStart: 173,
+								whiskerLength: '5%',
+								marker: {
+			                		radius: symbolRadius,
+			                		symbol: symbolShape
+			            		},	
+			            		stickyTracking: false,		
+								tooltip: {
+									followPointer: false
+									// pointFormat: '+{point.low} -{point.high}<br/>'
+								}
+							}
+						]
+					});
+            	});
+			});
+				
+
+		</script>
+
+
+	</head>
+
+	<body>	
+
+		<script>
+		   	// Modify the download link
+			$( document ).ready(function() {
+            	var sourceName = GetUrlValue('Source')
+            	var data = './data/' + sourceName + '.js';
+
+           		// document.getElementById("downloadlink").innerHTML = "<a href=\"" + data + "\">Download Data</a>";
+           		document.getElementById("download").setAttribute( "onClick", "location.href='" + data + "'");
+   			});
+		</script>
+
+
+		<center>
+
+		<!-- wrap starts here -->
+		<div class="wrap">
+
+			<BR>
+			<BR>
+
+			<div id='PlotTitle'></div>
+
+			
+			<!-- content-wrap starts here -->
+			<div id="content-wrap">
+				<div id="content">		
+
+					<!-- main starts here -->		
+					<div id="main">	
+
+						<!-- Light curves start here -->	
+						<div>
+
+							<script src="./js/Highcharts/highcharts.js"></script>
+							<script src="./js/Highcharts/highcharts-more.js"></script>
+							<script src="./js/Highcharts/modules/exporting.js"></script>
+
+							<div id="Spectrum" style="height: 400px; margin: auto; min-width: 1000px; max-width: 1000px"></div>
+
+							<!-- <div id="downloadlink" align="right" style="margin-right:55px"><a href="#">Download data</a></div> -->
+
+				            <div style="margin-right:55px">
+				                <div id="DownloadButtonDiv" style="width: 110px; float: right;">
+				                    <button id="download" form="PreferenceForm" type="button" onclick="location.href='./Data/3FGL_J0000.1+6545.js'" name="UpdatedClicked" value="True" class="btn btn-primary" style="color:white;font-size: 12px;margin-top:10px">Download Data</button>
+				                </div>  
+				                <div style="float: right; margin-right: 4px;"> 
+				                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="window.close()" style="color:black;font-size: 12px;margin-top:10px">Close</button>
+				                </div>           
+				              </div>
+				            </div>
+
+						<!-- Light curves end here -->
+						</div>		
+
+					<!-- main ends here -->					
+					</div>					
+				
+				<!-- content ends here -->	
+				</div>
+			
+			<!-- content-wrap ends here -->			
+			</div>
+	
+			<!-- footer starts here -->	
+			<div id="footer">
+				<div id="footer-content">
+				
+					<div class="col1 float-left">
+
+					</div>
+					
+				</div>
+			</div>
+			<!-- footer ends here -->
+			
+		<!-- wrap ends here -->
+		</div>
+		
+		<center>
+		
+	</body>
+
+</html>
+
+
