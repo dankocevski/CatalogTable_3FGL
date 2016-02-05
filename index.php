@@ -14,9 +14,19 @@
     <script type="text/javascript" src="./js/table2CSV.js" > </script> 
     <!-- <script src="bootstrap.min.js"></script> -->
 
+    <!-- Reset css -->
     <link rel="stylesheet" hrmouseef="./css/reset.css" type="text/css" />
-    <link rel="stylesheet" href="./css/bootstrap.css" type="text/css" />
-    <script src='http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js'></script>
+
+    <!-- Bootstrap core js -->
+    <script src="./js/bootstrap.min.js"></script>
+
+    <!-- Bootstrap core CSS -->
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap theme -->
+    <link href="./css/bootstrap-theme.min.css" rel="stylesheet">
+
+    <!-- NASA theme -->
     <link rel="stylesheet" href="/ssc/inc/css/fssc.css">
 
     <script>
@@ -249,7 +259,7 @@
                             // Add the data access columns
                             row[++j] = "<td><a href=\"./data/3FGL_lc_v5/" + sourceRecord['Source_Name'].replace(' ', '_').replace('+','p').replace('.','d').replace('-','m') + "_lc.png\" onclick=\"window.open(this.href,'targetWindow','width=800px, height=600px'); return false;\">Link</a></td>";
                             // row[++j] = "<td><a href=\"http://fermi.gsfc.nasa.gov/ssc/data/access/lat/4yr_catalog/ap_lcs/lightcurve_" + sourceRecord['Source_Name'].replace(' ', '').replace('+','p') + ".png\" onclick=\"window.open(this.href,'targetWindow','width=900px, height=600px'); return false;\">Link</a></td>";
-                            row[++j] = "<td><a href=\"./data/3FGL_spec_v5/"  + sourceRecord['Source_Name'].replace(' ', '_').replace('.','d').replace('+','p') + "_spec.png\" onclick=\"window.open(this.href,'targetWindow','width=800px, height=600px'); return false;\">Link</a></td>";
+                            row[++j] = "<td><a href=\"./data/3FGL_spec_v5/"  + sourceRecord['Source_Name'].replace(' ', '_').replace('.','d').replace('+','p').replace('-','m') + "_spec.png\" onclick=\"window.open(this.href,'targetWindow','width=800px, height=600px'); return false;\">Link</a></td>";
                             row[++j] = "<td><a href=\"http://fermi.gsfc.nasa.gov/cgi-bin/ssc/LAT/LATDataQuery.cgi?coordfield=" + sourceRecord['RAJ2000'] + "," + sourceRecord['DEJ2000'] + "\" target=\"_blank\"" + ">Link</a></td>";
                             row[++j] ='</tr>';
                         }
@@ -1083,7 +1093,7 @@
                                     // document.getElementById("tip").innerHTML =  point.Source_Name + '<br>RA: ' + point.RAJ2000 + ', Dec: ' + point.DEJ2000 + '<br>Association: ' + point.ASSOC1;
 
                                     var lightcurveLink = "<a href=\"./data/3FGL_lc_v5/" + point.Source_Name.replace(' ', '_').replace('+','p').replace('.','d').replace('-','m') + "_lc.png\" onclick=\"window.open(this.href,'targetWindow','width=800px, height=600px'); return false;\">Light Curve</a>";
-                                    var spectrum = "<a href=\"./data/3FGL_spec_v5/"  + point.Source_Name.replace(' ', '_').replace('.','d').replace('+','p') + "_spec.png\" onclick=\"window.open(this.href,'targetWindow','width=800px, height=600px'); return false;\">Spectrum</a>";
+                                    var spectrum = "<a href=\"./data/3FGL_spec_v5/"  + point.Source_Name.replace(' ', '_').replace('.','d').replace('+','p').replace('-','m') + "_spec.png\" onclick=\"window.open(this.href,'targetWindow','width=800px, height=600px'); return false;\">Spectrum</a>";
 
                                     document.getElementById("tip").innerHTML =  point.Source_Name + '<BR>RA: ' + point.RAJ2000 + ', Dec: ' + point.DEJ2000 + '<BR>Association: ' + point.ASSOC1 + '<BR>' + lightcurveLink  + ' | ' + spectrum;
 
@@ -1231,7 +1241,7 @@
                                         tip.style.top = point_CanvasProjection[1] + offsetTop - 105 + "px";
 
                                         var lightcurveLink = "<a href=\"./data/3FGL_lc_v5/" + point.Source_Name.replace(' ', '_').replace('+','p').replace('.','d').replace('-','m') + "_lc.png\" onclick=\"window.open(this.href,'targetWindow','width=800px, height=600px'); return false;\">Light Curve</a>";
-                                        var spectrum = "<a href=\"./data/3FGL_spec_v5/"  + point.Source_Name.replace(' ', '_').replace('.','d').replace('+','p') + "_spec.png\" onclick=\"window.open(this.href,'targetWindow','width=800px, height=600px'); return false;\">Spectrum</a>";
+                                        var spectrum = "<a href=\"./data/3FGL_spec_v5/"  + point.Source_Name.replace(' ', '_').replace('.','d').replace('+','p').replace('-','m')  + "_spec.png\" onclick=\"window.open(this.href,'targetWindow','width=800px, height=600px'); return false;\">Spectrum</a>";
 
                                         document.getElementById("tip").innerHTML =  point.Source_Name + '<BR>RA: ' + point.RAJ2000 + ', Dec: ' + point.DEJ2000 + '<BR>Association: ' + point.ASSOC1 + '<BR>' + lightcurveLink  + ' | ' + spectrum;
 
